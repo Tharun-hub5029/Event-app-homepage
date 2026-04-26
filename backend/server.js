@@ -1,10 +1,18 @@
 require("dotenv").config();
 
+process.on("uncaughtException", (err) => {
+  console.error("❌ Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("❌ Unhandled Rejection:", err);
+});
+
 const express = require("express");
 const cors = require("cors");
 const { createServer } = require("http");
 
-const sequelize = require("./config/db");
+const { sequelize, connectDB } = require("./config/db");
 
 const User = require("./model/user");
 const Post = require("./model/Post");
@@ -32,6 +40,11 @@ app.use(cors({
   credentials: true
 }));
 
+// Test route
+app.get("/", (req, res) => {
+  res.send("API is running 🚀");
+});
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/universities", University);
@@ -40,8 +53,13 @@ app.use("/api/savedPosts", savedPosts);
 app.use("/api/users", users);
 app.use("/api/connections", connectionRoutes);
 
-// WebSocket
-initSocket(server);
+// Socket (safe init)
+try {
+  initSocket(server);
+} catch (err) {
+  console.error("❌ Socket init failed:", err);
+}
+
 const io = getIo();
 
 io.on("connection", (socket) => {
@@ -56,19 +74,26 @@ io.on("connection", (socket) => {
   });
 });
 
-// Start server
 const PORT = process.env.PORT || 5000;
 
-server.listen(PORT, async () => {
+async function startServer() {
   try {
+    await connectDB();
+
     if (process.env.NODE_ENV !== "production") {
       await sequelize.sync({ alter: true });
     } else {
       await sequelize.sync();
     }
 
-    console.log(`🚀 Server running on port ${PORT}`);
+    server.listen(PORT, () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+
   } catch (error) {
-    console.error("❌ Database sync error:", error);
+    console.error("❌ Server failed to start:", error);
+    process.exit(1);
   }
-});
+}
+
+startServer();
