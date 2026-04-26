@@ -1,15 +1,13 @@
-import { useState,useEffect } from "react";
-import Navbar from "../components/Navbar";
-import HeroSection from "../components/HeroSection";
-import Features from "../components/Features";
-import Footer from "../components/Footer";
+import Navbar from "../Components/Navbar";
+import HeroSection from "../Components/HeroSection";
+import Features from "../Components/Features";
+import Footer from "../Components/Footer";
 
 const Home = () => {
   return (
     <div>
       <Navbar />
       <HeroSection />
-        <h3></h3>
       <Features />
       <Footer />
     </div>
